@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View My Bookings</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"></script>
+    <style>
+        .navbar-brand img {
+            width: 120px;
+        }
+        .navbar-nav {
+            margin-left: auto;
+        }
+        .profile-slider {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #f8f8f8;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .profile-slider.open {
+            transform: translateX(0);
+        }
+
+        .profile-slider .close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+
+        .profile-slider .profile-button {
+            font-size: 18px;
+            padding: 15px;
+            color: #333;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+            text-align: center;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .profile-slider .subheader {
+            font-size: 16px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .profile-slider .subheader a {
+            color: #333;
+            text-decoration: none;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="home.html">
+            <img src="images/logo.png" alt="Logo" width="120">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="booking.html">Make a new Booking</a>
+                </li>
+            </ul>
+            <div class="navbar-nav ml-auto">
+                <button class="btn btn-light" onclick="toggleSlider()">
+                    <span>&#9776;</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Slider -->
+    <div id="profileSlider" class="profile-slider">
+        <button type="button" class="close" aria-label="Close" onclick="toggleSlider()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="profile-content">
+            <a href="profile.html" class="profile-button">Profile</a>
+            <div class="subheader">
+                <a href="view.html">View My Bookings</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mt-4">
+        <h2>My Bookings</h2>
+        <div id="booking-table-container"></div>
+    </div>
+
+    <!-- Update Booking Modal -->
+    <div class="modal fade" id="updateBookingModal" tabindex="-1" role="dialog" aria-labelledby="updateBookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateBookingModalLabel">Update Booking</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <input type="hidden" id="updateBookingID">
+                        <div class="form-group">
+                            <label for="updateFacilityDescription">Facility Description</label>
+                            <input type="text" class="form-control" id="updateFacilityDescription">
+                        </div>
+                        <div class="form-group">
+                            <label for="updateBookingDateFrom">Booking Date From</label>
+                            <input type="date" class="form-control" id="updateBookingDateFrom">
+                        </div>
+                        <div class="form-group">
+                            <label for="updateBookingDateTo">Booking Date To</label>
+                            <input type="date" class="form-control" id="updateBookingDateTo">
+                        </div>
+                        <div class="form-group">
+                            <label for="updateBookedBy">Booked By</label>
+                            <input type="text" class="form-control" id="updateBookedBy">
+                        </div>
+                        <div class="form-group">
+                            <label for="updateBookingStatus">Booking Status</label>
+                            <input type="text" class="form-control" id="updateBookingStatus">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUpdatedBooking()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateBookingTable(bookingInfo) {
+            let tableHeading = `
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Booking ID</th>
+                                <th scope="col">Facility Description</th>
+                                <th scope="col">Booking Date From</th>
+                                <th scope="col">Booking Date To</th>
+                                <th scope="col">Booked By</th>
+                                <th scope="col">Booking Status</th>
+                                <th scope="col">Actions</th>
+                            </tr>   
+                        </thead>
+                        <tbody>`;
+
+            let tableInfoHTML = ""; 
+            for (let i = 0; i < bookingInfo.length; i++) { 
+                tableInfoHTML += `
+                    <tr scope="row">
+                        <td>${bookingInfo[i].bookingId}</td>
+                        <td>${bookingInfo[i].facilityDescription}</td>
+                        <td>${bookingInfo[i].bookingDateFrom}</td>
+                        <td>${bookingInfo[i].bookingDateTo}</td>
+                        <td>${bookingInfo[i].bookedBy}</td>
+                        <td>${bookingInfo[i].bookingStatus}</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="updateBookingByID(${bookingInfo[i].bookingId})">Update</button>
+                            <button class="btn btn-danger" onclick="deleteBookingByID(${bookingInfo[i].bookingId})">Delete</button>
+                        </td>
+                    </tr>`;
+            }
+
+            tableInfoHTML += `</tbody></table></div>`;
+            document.getElementById("booking-table-container").innerHTML = tableHeading + tableInfoHTML;
+        }
+
+        function deleteBookingByID(bookingId) {
+            let isSure = confirm("Are you sure you want to delete this booking?");
+            if (isSure) {
+                let controllerURL = `http://localhost:5188/api/Booking/Delete/${bookingId}`;
+                let xhr = new XMLHttpRequest();
+                xhr.open("DELETE", controllerURL, true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                const token = localStorage.getItem('authToken');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+
+                xhr.onreadystatechange = function() {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            console.log('Booking successfully deleted:', xhr.responseText);
+                            location.reload(); // Refresh the page to reflect the changes
+                        } else {
+                            console.error('Failed to delete booking. Status:', this.status, 'Response:', xhr.responseText);
+                        }
+                    }
+                };
+
+                xhr.onerror = function() {
+                    console.error('An error occurred during the transaction');
+                };
+
+                xhr.send();
+            }
+        }
+
+        function updateBookingByID(bookingId) {
+            let controllerURL = `http://localhost:5188/api/Booking/GetById?id=${bookingId}`;
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", controllerURL, true);
+            xhr.setRequestHeader('Content-Type','application/json');
+            const token = localStorage.getItem('authToken');
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+
+            xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    let booking = JSON.parse(xhr.responseText);
+                    document.getElementById("updateFacilityDescription").value = booking.facilityDescription;
+                    document.getElementById("updateBookingDateFrom").value = booking.bookingDateFrom;
+                    document.getElementById("updateBookingDateTo").value = booking.bookingDateTo;
+                    document.getElementById("updateBookingID").value = booking.bookingId;
+                    document.getElementById("updateBookedBy").value = booking.bookedBy;
+                    document.getElementById("updateBookingStatus").value = booking.bookingStatus;
+
+                    $('#updateBookingModal').modal('show');
+                } else {
+                    console.error('Failed to fetch booking for update. Status:', this.status, 'Response:', xhr.responseText);
+                }
+            };
+
+            xhr.send();
+        }
+
+        function saveUpdatedBooking() {
+            let bookingId = document.getElementById("updateBookingID").value;
+            let updatedBooking = {
+                bookingId: bookingId,
+                facilityDescription: document.getElementById("updateFacilityDescription").value,
+                bookingDateFrom: document.getElementById("updateBookingDateFrom").value,
+                bookingDateTo: document.getElementById("updateBookingDateTo").value,
+                bookedBy: document.getElementById("updateBookedBy").value,
+                bookingStatus: document.getElementById("updateBookingStatus").value
+            };
+
+            let controllerURL = `http://localhost:5188/api/Booking/Put/${bookingId}`;
+            let xhr = new XMLHttpRequest();
+            xhr.open("PUT", controllerURL, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            const token = localStorage.getItem('authToken');
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+
+            xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    console.log('Booking successfully updated:', xhr.responseText);
+                    $('#updateBookingModal').modal('hide');
+                    location.reload();
+                } else {
+                    console.error('Failed to update booking. Status:', this.status, 'Response:', xhr.responseText);
+                }
+            };
+
+            xhr.send(JSON.stringify(updatedBooking));
+        }
+
+        function toggleSlider() {
+            const slider = document.getElementById("profileSlider");
+            slider.classList.toggle("open");
+        }
+
+        // Fetch bookings on page load
+        function fetchBookings() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", "http://localhost:5188/api/Booking/GetAll", true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            const token = localStorage.getItem('authToken');
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+
+            xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    let bookings = JSON.parse(xhr.responseText);
+                    generateBookingTable(bookings);
+                } else {
+                    console.error('Failed to fetch bookings. Status:', this.status, 'Response:', xhr.responseText);
+                }
+            };
+
+            xhr.send();
+        }
+
+        window.onload = fetchBookings;
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+@victoria_esdproj_HostAddress = http://localhost:5188
+
+GET {{victoria_esdproj_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
